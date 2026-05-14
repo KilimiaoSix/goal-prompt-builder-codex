@@ -2,6 +2,8 @@
 
 Codex skill for drafting audit-friendly `/goal` commands for Codex CLI 0.128+.
 
+[简体中文](README_CN.md) · English
+
 This is a Codex-format adaptation of win4r's `goal-prompt-builder` skill. It keeps the original workflow, scenario templates, project defaults, and examples, while converting the main skill instructions and metadata to Codex's `SKILL.md` + `agents/openai.yaml` format.
 
 ## What It Does
