@@ -9,7 +9,7 @@ This is a Codex-format adaptation of win4r's `goal-prompt-builder` skill. It kee
 ## What It Does
 
 - Turns fuzzy long-running task requests into copy-pasteable `/goal` commands.
-- Uses the Objective / Scope / Constraints / Done when / Stop if / token budget structure.
+- Uses the Objective / Scope / Constraints / Done when / Stop if structure, with token budget included only when explicitly requested or supplied.
 - Detects common project types from local files.
 - Reads project rules such as `AGENTS.md` and `CLAUDE.md` when present.
 - Pushes back on vague goals before rendering a command.

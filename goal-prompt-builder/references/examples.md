@@ -54,8 +54,6 @@ Stop if:
   - 现有的 src/auth/* 测试任何一个开始失败（regression — 不要靠改测试解决）。
   - 需要新增 npm 依赖。
   - TypeScript strict 模式下出现新增的 `any` 类型（项目启用了 strict）。
-
-Use a token budget of 80000 tokens for this goal.
 ```
 
 **审计友好度：优秀 · 6 项验收 · 0 风险标记**
@@ -64,7 +62,7 @@ Use a token budget of 80000 tokens for this goal.
 - Done when 第 2 项把"测试覆盖"翻译成 4 个具体可枚举的场景（current/grace 内/grace 外/双过期）
 - Done when 第 3 项要求"粘贴 test summary"防止只看 exit code
 - Stop if 第 2 条是 regression 兜底，明确禁止"改测试让自己通过"
-- 80K 预算适合双文件改造 + 4 个测试
+- 未写 token budget，因为用户没有明确提供预算；需要预算时可单独追加
 
 ---
 
@@ -92,7 +90,7 @@ First action: 先逐字读取以下文件，然后回报计数：
   - openspec/changes/add-favorites-smart-sort/specs/favorites-sort/spec.md
   - CLAUDE.md
 报告：tasks.md 中 task 数量、spec.md 中 SHALL 数量、CLAUDE.md 中 Iron Rules 数量。
-等我确认后再开始实现。
+如果任一数量为 0 或文件缺失，立即停止并汇报；否则继续实现。
 
 Scope: design.md 中 "MUST NOT modify" 清单严格遵守；其他 .swift 文件可改。
 
@@ -126,14 +124,12 @@ Stop if:
   - 既有 11 个测试中任意一个失败（regression — 不要改测试）。
   - 需要 nonisolated 修饰符（先停下汇报为什么需要）。
   - iPhone 17 模拟器不可用（先 `xcrun simctl list devices available`，由我决定）。
-
-Use a token budget of 130000 tokens for this goal.
 ```
 
 **审计友好度：优秀 · 7 项验收 · 8 项 stop-if · 0 风险标记**
 
 **关键设计选择**：
-- First action 强制先读 5 个文件 + 报数——绕开 `@filename` 引用语法的不确定性
+- First action 强制先读 5 个文件 + 报数，并在异常时自行停止；正常时继续实现，避免 goal 模式默认卡在人工确认上
 - CLAUDE.md 的 4 条铁律每一条同时进 Constraints（告诉模型别这么做）+ Stop if（如果发现必须这么做就停）
 - Done when 第 6 项要求 paste test summary，防止 xcodebuild 输出过长模型只看末尾
 - Stop if 第 8 条 iPhone 17 模拟器兜底是 Xcode beta 项目特有的——并非每台机器都装
@@ -206,8 +202,6 @@ Stop if:
   - 某个 .astro 文件无法解析（语法错误 / 编码问题）。
   - git status 显示任何 .astro / .tsx / .ts / .mdx / config 文件被修改（越界）。
   - 发现 README 与既有文档在同一事实上互相冲突（升级，让我决定）。
-
-Use a token budget of 60000 tokens for this goal.
 ```
 
 **审计友好度：优秀 · 4 项验收 · 0 风险标记**
@@ -216,7 +210,7 @@ Use a token budget of 60000 tokens for this goal.
 - Constraints 列了具体扩展名（.astro / .tsx / .ts / .mdx）——比 "不改源码" 更精确
 - Done when 第 1 项给出 mermaid 长度上限（200 行），防止图过大失去可读性
 - Done when 第 4 项验证 git diff——把"没改代码"作为可机械检验的验收项
-- 60K 预算偏低，因为不动代码的 goal 不需要长跑
+- 未写 token budget，因为用户没有明确提供预算；需要预算时可按只读任务单独建议 50-80K
 
 ---
 
@@ -244,14 +238,12 @@ Stop if:
   - <mechanical condition 1>
   - <mechanical condition 2>
   - <mechanical condition 3>
-
-Use a token budget of <N> tokens for this goal.
 ```
 
 **几个填空提示**：
 - Done when 至少 3 项，每项要 cite 一个文件 / 命令 / 测试
 - Stop if 至少 3 项，每项要可机械检测
 - 避免 "改进 / 优化 / 全部 / 彻底" 这类虚词
-- Token budget：单文件 30-60K，子系统 80-120K，跨多文件 120-200K
+- Token budget 默认不写；只有你明确提供或要求推荐时，才在 Stop if 后追加
 
 如果你写完想让我 review，把它贴给我，我会指出 audit 友好度问题。

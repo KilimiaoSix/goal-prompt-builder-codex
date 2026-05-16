@@ -19,7 +19,7 @@
 
 ## 为什么需要它
 
-Codex CLI 0.128+ 引入了 `/goal`：一个持久化目标机制，带运行时延续、完成审计、token budget 和软停止。
+Codex CLI 0.128+ 引入了 `/goal`：一个持久化目标机制，带运行时延续、完成审计、可选 token budget 和软停止。
 
 它很强，但也有一个明显失败模式：目标写得太糊，Codex 就会长时间朝错误方向推进，最后还可能误判完成。
 
@@ -35,7 +35,7 @@ Codex CLI 0.128+ 引入了 `/goal`：一个持久化目标机制，带运行时�
 - “整理一下”没有可验证状态。
 - “测试通过”容易退化成代理信号。
 - 没有 Stop if，跑偏时没有边界。
-- 没有 token budget，成本不可控。
+- 如果确实需要控制成本，可以显式加入 token budget；不需要时不应默认生成。
 
 这个 skill 会把目标改写成更适合 `/goal` 审计机制的结构：
 
@@ -56,7 +56,7 @@ Stop if:
   - <可机械识别的停止条件>
   - <越界或破坏性操作时停止>
 
-Use a token budget of <N> tokens for this goal.
+[可选] Use a token budget of <N> tokens for this goal.
 ```
 
 ## 一句话安装
@@ -100,7 +100,7 @@ Use $goal-prompt-builder to design a goal for migrating auth from v1 to v2.
 2. 自动检测项目类型：Node / Python / Swift / Go / Rust / 静态文档等。
 3. 读取项目规则：优先读取 `AGENTS.md`、`CLAUDE.md`、`CONTRIBUTING.md`。
 4. 选择场景模板：重构、新功能、批量任务、代码考古、UI audit、守门员 review、自定义。
-5. 收集五段输入：Objective、Scope、Constraints、Done when、Stop if。
+5. 收集核心输入：Objective、Scope、Constraints、Done when、Stop if；token budget 仅在用户明确提供或要求推荐时加入。
 6. 输出最终 `/goal`，并给出简短设计理由和审计友好度判断。
 
 ## 内置场景
@@ -132,9 +132,9 @@ Use $goal-prompt-builder to design a goal for migrating auth from v1 to v2.
 
 1. 不放过 “all / everything / 全部 / 彻底” 这类不可枚举表达。
 2. 不把 “测试通过” 当成验收项，必须写成具体命令、退出码和输出摘要。
-3. 每个 goal 都必须有 token budget。
+3. 默认不写 token budget；只有用户明确提供或要求推荐时才加入。
 4. 任何涉及测试代码的 goal，都要加“不许通过削弱测试来让测试通过”的 Stop if。
-5. SDD / OpenSpec 类任务必须先读规格文件并报告计数，再开始实现。
+5. SDD / OpenSpec 类任务必须先读规格文件并报告计数；除非用户明确要求人工确认，否则正常计数后继续实现。
 6. brownfield 项目必须询问 MUST NOT modify 清单。
 7. 审计友好度明显不够时，不直接输出最终 goal，而是先指出缺口。
 

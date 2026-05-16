@@ -38,8 +38,6 @@ Stop if:
   - 现有测试开始失败（regression — 不要靠改测试解决）。
   - 需要新增依赖 / 升级语言版本。
   - <项目类型默认 stop-if>
-
-Use a token budget of <60-100K> tokens for this goal.
 ```
 
 ### Rationale
@@ -48,7 +46,9 @@ Use a token budget of <60-100K> tokens for this goal.
 - **测试命令必须完整**: "测试通过" 是代理信号，"`npx tsc --noEmit && npm test -- src/auth` 退出码 0 + paste summary" 才是证据
 - **Stop if 第 1 条永远是"修改禁区"**: 这是最常见的越界路径
 
-### Token budget guidance
+### Optional token budget guidance
+Use this only when the user explicitly asks for a token budget recommendation.
+
 - 单文件 ≈ 30-60K
 - 双文件 + 测试 ≈ 60-100K
 - 跨 3+ 文件 ≈ 100-150K
@@ -73,7 +73,7 @@ First action: 先逐字读取以下文件，然后回报计数：
   - <spec 路径>/specs/<capability>/spec.md
   - AGENTS.md（如果存在）
 报告：tasks.md 中 task 数量、spec.md 中 SHALL 数量、识别到的 AGENTS.md 关键约束条数。
-等我确认后再开始实现。
+如果任一数量为 0 或文件缺失，立即停止并汇报；否则继续实现。
 
 Scope: design.md 中 "MUST NOT modify" 清单严格遵守；其他文件可改。
 
@@ -98,15 +98,13 @@ Stop if:
   - 实现需要新增依赖。
   - 现有测试开始失败。
   - <项目类型默认 stop-if>
-
-Use a token budget of <100-150K> tokens for this goal.
 ```
 
 ### Rationale
-- **First action 是"先读 + 报数"**: 这一段是 SDD 模式的 killer 设计。绕开 `@filename` 引用语法是否被 Codex 解析的不确定性，强制模型在动手前**显式回报**它读到了多少内容。如果回报的数字对不上，立刻 `/goal pause` 排查，比让它跑半天才发现没读到 spec 安全得多
+- **First action 是"先读 + 报数"**: 这一段是 SDD 模式的 killer 设计。绕开 `@filename` 引用语法是否被 Codex 解析的不确定性，强制模型在动手前**显式回报**它读到了多少内容。如果回报的数字明显异常或文件缺失，模型应自行停止并汇报；否则继续实现，避免 goal 模式默认卡在人工确认上
 - **Done when 第 1-3 项是"映射 1:1"**: SHALL → 测试 / Scenario → 集成测试 / task → 文件——这种 1:1 映射是 SDD + /goal 配合的核心价值
 - **Stop if 第 2 条"SHALL 冲突 → 升级"**: 这种冲突应该回到 spec 阶段解决，不应该让模型独断
-- **预算偏高（100-150K）**: SDD 实现通常涉及多文件 + 多测试，预算给足
+- **可选预算建议（100-150K）**: 仅当用户要求 token budget 时使用；SDD 实现通常涉及多文件 + 多测试，预算应给足
 
 ### Variant: 没有 SDD spec 的"新功能"
 如果用户只有自然语言需求，没有 spec 文档，应该建议：
@@ -150,8 +148,6 @@ Stop if:
   - 现有的相关测试开始失败。
   - 某个对象实际不可复现 / 不存在。
   - 完成 N 件后 review 发现 < M 件实际正确（M 由用户定，通常 = N）。
-
-Use a token budget of <100-150K> tokens for this goal.
 ```
 
 ### Rationale
@@ -192,15 +188,13 @@ Stop if:
   - 某个文件需要外部工具才能解析（加密 / 二进制 / 专有格式）。
   - git status 显示任何源码文件被修改（越界，立即停止）。
   - 发现两份既有文档在同一事实上互相冲突（升级，让用户决定）。
-
-Use a token budget of <50-80K> tokens for this goal.
 ```
 
 ### Rationale
 - **Constraints 比 Scope 更长更严**: 这种 goal 的核心价值是"不动代码"，禁区清单必须详尽
 - **"引用必须用真实路径 + 行号"**: 防止模型编造好看的报告。Done when 应该至少抽查 1 项 cite 是否真实（人工 review 时）
 - **Done when 最后一项验证 git diff**: 把"没改代码"显式作为可机械检验的验收项
-- **预算偏低（50-80K）**: 不动代码的 goal 不需要长跑，主要消耗在 read 上
+- **可选预算建议（50-80K）**: 仅当用户要求 token budget 时使用；不动代码的 goal 不需要长跑，主要消耗在 read 上
 
 ---
 
@@ -236,8 +230,6 @@ Stop if:
   - 宣称的某项功能在源码中找不到任何相关文件（先列出搜索过的关键字，由用户决定是否真的缺失）。
   - 出现需要"运行才能判断"的 case（如动画行为、异步交互）—— 标 ⚠ 并说明"需要运行验证"，不要凭空给 ✅ 或 ❌。
   - git status 显示除报告之外的任何变化。
-
-Use a token budget of <60-90K> tokens for this goal.
 ```
 
 ### Rationale
@@ -281,8 +273,6 @@ Stop if:
   - 某 <分支 / PR> 需要新依赖才能跑测试（可能引入未明示的依赖，需人工确认）。
   - 测试运行需要环境变量 / 凭据未在 .env.example 中声明。
   - <分支 / PR> 在 review 过程中被 force-push（diff 已变化）。
-
-Use a token budget of <70-100K> tokens for this goal.
 ```
 
 ### Rationale
@@ -322,6 +312,10 @@ Stop if:
   - <mechanical condition>
   - <mechanical condition>
   - <mechanical condition>
+```
 
+如果用户明确提供或要求 token budget，在 Stop if 之后追加：
+
+```
 Use a token budget of <N> tokens for this goal.
 ```

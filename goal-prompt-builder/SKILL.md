@@ -1,13 +1,13 @@
 ---
 name: goal-prompt-builder
-description: Build high-quality /goal commands for OpenAI Codex CLI 0.128+ that are audit-friendly and resistant to false completion. Use when the user wants to write, draft, generate, improve, or review a /goal prompt, including requests like "help me write a goal", "design a goal for X", "review my goal command", "make a goal for this repo", long-running Codex tasks, persistent agent objectives, Ralph loop style work, or "keep working until done". Produces a copy-pasteable /goal command using Objective, Scope, Constraints, Done when, Stop if, and token budget; supports step-by-step, full-description, and hybrid workflows; detects project type from local files or repo context; reads AGENTS.md/CLAUDE.md when present; and checks audit-friendliness before output.
+description: Build high-quality /goal commands for OpenAI Codex CLI 0.128+ that are audit-friendly and resistant to false completion. Use when the user wants to write, draft, generate, improve, or review a /goal prompt, including requests like "help me write a goal", "design a goal for X", "review my goal command", "make a goal for this repo", long-running Codex tasks, persistent agent objectives, Ralph loop style work, or "keep working until done". Produces a copy-pasteable /goal command using Objective, Scope, Constraints, Done when, Stop if, and an optional explicit token budget; supports step-by-step, full-description, and hybrid workflows; detects project type from local files or repo context; reads AGENTS.md/CLAUDE.md when present; and checks audit-friendliness before output.
 ---
 
 # Goal Prompt Builder
 
 Use this skill to turn a fuzzy task request into a complete, audit-friendly `/goal` command for Codex CLI 0.128+.
 
-The job is not to run `/goal`. The job is to help the user write a goal that Codex can pursue safely, verify mechanically, and stop when boundaries are crossed or budget is exhausted.
+The job is not to run `/goal`. The job is to help the user write a goal that Codex can pursue safely, verify mechanically, and stop when boundaries are crossed or explicit stop conditions are hit.
 
 ## Output Contract
 
@@ -26,7 +26,7 @@ Every generated goal should follow this structure and order:
 ```text
 /goal <objective>.
 
-[Optional: First action: read X, Y, Z and report counts. Wait for ack.]
+[Optional: First action: read X, Y, Z and report counts in the first progress update. Continue without waiting unless the user explicitly asks for a manual approval gate.]
 
 Scope: <files / subsystem / feature area>.
 
@@ -43,10 +43,12 @@ Stop if:
   - <mechanically detectable condition 1>
   - <mechanically detectable condition 2>
 
-Use a token budget of <N> tokens for this goal.
+[Optional: Use a token budget of <N> tokens for this goal. Include only when the user explicitly supplied a budget or explicitly asked for a budget recommendation.]
 ```
 
 This order matches the way goal continuation audits work: objective first, then scope to bound the search, constraints to prune unsafe paths, acceptance criteria to define success, and stop-if bullets as runtime guards.
+
+Do not render bracketed `[Optional: ...]` notes verbatim. Either omit the optional section entirely or render it as normal `/goal` text only when its condition applies.
 
 ## Workflow
 
@@ -99,9 +101,9 @@ Ask which scenario fits, then load the matching section from `references/scenari
 | F | Gatekeeper: evaluate whether a PR/change is mergeable |
 | G | Custom: use the bare golden template |
 
-Each scenario has different audit pressure. Feature goals should prefer a `First action: read specs and report counts` guard. Archaeology goals should be explicitly read-only. Batch goals need a numeric target.
+Each scenario has different audit pressure. Feature goals should prefer a `First action: read specs and report counts` guard that does not wait for confirmation by default. Archaeology goals should be explicitly read-only. Batch goals need a numeric target.
 
-### 4. Gather the Five Inputs
+### 4. Gather the Required Inputs
 
 Ask only for missing information. In hybrid mode, batch the missing fields into one concise question.
 
@@ -131,13 +133,15 @@ Stop if:
 - Include dependency, schema, destructive operation, and out-of-scope file guards when relevant.
 - For tested code, include a no-test-rewriting guard: existing tests failing is a regression; do not make them pass by weakening tests.
 
-Token budget:
-- Always include one.
-- If unknown, propose a conservative budget based on scope:
+Token budget (optional):
+- Do not invent or add a token budget by default.
+- Include a token budget line only when the user explicitly supplied a budget or explicitly asked for a budget recommendation.
+- If the user asks for a recommendation, propose a conservative budget based on scope:
   - 20K-40K for narrow single-file or prompt/report work.
   - 60K-100K for medium refactors or bounded feature work.
   - 120K-180K for spec-driven implementation across several modules.
   - Above 300K usually means split into multiple goals.
+- If the user did not mention budget, omit the entire `Use a token budget...` line from the final `/goal`.
 
 ## Audit-Friendliness Check
 
@@ -146,7 +150,7 @@ Before outputting the final command, internally check:
 - Acceptance count: 0 bad, 1-2 weak, 3-5 good, 6-8 strong.
 - Vague verbs: `improve`, `optimize`, `clean up`, `全部`, `彻底`, `all`, `everything`.
 - Stop-if specificity: concrete file/command/state beats "if unclear".
-- Token budget: must be present.
+- Token budget: absent by default; if present, it must be explicitly user-supplied or explicitly requested.
 - Mechanical verifiability: every Done when item should have a concrete evidence target.
 
 If audit-friendliness is below roughly 70%, do not render the final command. Surface the weak spots and ask for refinement. Be specific about which Done when or Stop if item needs tightening.
@@ -163,9 +167,9 @@ Load only the reference needed for the current case:
 
 1. Do not write Stop if as "if unclear, stop"; ask for concrete conditions.
 2. Do not let `all`, `everything`, `全部`, or `彻底` pass without converting them into numbers or enumerable sources.
-3. Always include a token budget.
+3. Do not include a token budget unless the user explicitly supplied one or explicitly asked for a recommendation.
 4. For goals touching tested code, include a no-test-rewriting regression guard.
-5. For SDD/OpenSpec feature goals, include a first action to read spec files and report counts before implementation.
+5. For SDD/OpenSpec feature goals, include a first action to read spec files and report counts before implementation, but do not require user confirmation unless the user explicitly requests an approval gate.
 6. For brownfield projects, ask about MUST NOT modify lists.
 7. If the user only asks for a blank template, provide the template and skip the interview.
 
