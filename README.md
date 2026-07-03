@@ -1,3 +1,5 @@
+> **⚠️ MOVED / 已迁移**: This skill now lives in [KilimiaoSix/agent-skills](https://github.com/KilimiaoSix/agent-skills) under `skills/goal-prompt-builder`. This repository is archived and no longer maintained. 本仓库已归档，后续维护均在 agent-skills 合集仓库进行。
+
 # goal-prompt-builder for Codex
 
 > 一个用于生成高质量 Codex `/goal` 命令的 Codex Skill，目标是让长任务可审计、可停止、不容易跑偏。
